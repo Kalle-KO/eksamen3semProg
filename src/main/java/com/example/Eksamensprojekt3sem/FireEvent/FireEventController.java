@@ -143,4 +143,18 @@ public class FireEventController {
         }
     }
 
+    /**
+     * Registrerer en brand og aktiverer sirener indenfor 10 km.
+     * Kaldes med POST /api/fire-events/register?latitude=..&longitude=..
+     */
+    @PostMapping("/register")
+    public ResponseEntity<FireEventModel> registerFireEvent(
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude
+    ) {
+        FireEventModel evt = fireEventService.registerEvent(latitude, longitude);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(evt);
+    }
 }

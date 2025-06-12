@@ -4,6 +4,7 @@ import com.example.Eksamensprojekt3sem.Siren.SirenModel;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -15,12 +16,16 @@ public class FireEventModel {
     @Column(name = "fire_event_id")
     private int FireEventId;
 
+    @Column(name = "latitude")
     private double latitude;
 
+    @Column(name = "longitude")
     private double longitude;
 
+    @Column(name = "timestamp")
     private LocalDateTime timestamp;
 
+    @Column(name = "closed")
     private boolean closed;
 
     @ManyToMany
@@ -29,7 +34,7 @@ public class FireEventModel {
             joinColumns = @JoinColumn(name = "fire_event_id"),
             inverseJoinColumns = @JoinColumn(name = "siren_id")
     )
-    private Set<SirenModel> sirens;
+    private Set<SirenModel> sirens =  new HashSet<>();
 
     public FireEventModel() {}
 

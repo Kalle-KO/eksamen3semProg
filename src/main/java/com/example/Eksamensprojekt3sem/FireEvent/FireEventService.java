@@ -1,16 +1,27 @@
 package com.example.Eksamensprojekt3sem.FireEvent;
 
+import com.example.Eksamensprojekt3sem.Enum.Status;
+import com.example.Eksamensprojekt3sem.Siren.SirenModel;
+import com.example.Eksamensprojekt3sem.Siren.SirenRepository;
+import com.example.Eksamensprojekt3sem.Siren.SirenService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class FireEventService {
 
     private final FireEventRepository fireEventRepository;
+    private final SirenRepository sirenRepository;
+    private final SirenService sirenService;
 
-    public FireEventService(FireEventRepository fireEventRepository) {
+    private static final double ACTIVATION_RADIUS_KM = 10.0;
+
+    public FireEventService(FireEventRepository fireEventRepository,  SirenRepository sirenRepository,  SirenService sirenService) {
         this.fireEventRepository = fireEventRepository;
+        this.sirenRepository = sirenRepository;
+        this.sirenService = sirenService;
     }
 
     public List<FireEventModel> findAll() {
@@ -34,5 +45,38 @@ public class FireEventService {
 
     public void deleteById(int id) {
         fireEventRepository.deleteById(id);
+    }
+
+    /**
+     * Opretter en nyt FireEvent, finder sirener inden for 10 km og aktiverer dem.
+     */
+    public FireEventModel registerEvent(double lat, double lon) {
+        // 1) Opret event og gem — nu er det managed og får et ID
+        FireEventModel event = new FireEventModel();
+        event.setLatitude(lat);
+        event.setLongitude(lon);
+        event.setTimestamp(LocalDateTime.now());
+        event.setClosed(false);
+        event = fireEventRepository.save(event);
+
+        // 2) Hent alle sirener og tjek afstand
+        List<SirenModel> allSirens = sirenRepository.findAll();
+        for (SirenModel s : allSirens) {
+            if (s.isDisabled()) continue;
+
+            double dist = sirenService.calculateDistance(
+                    lat, lon,
+                    s.getLatitude(), s.getLongitude()
+            );
+
+            if (dist <= ACTIVATION_RADIUS_KM) {
+                s.setStatus(Status.FARLIG);
+                event.getSirens().add(s);
+            }
+        }
+
+        // 3) Gem opdaterede sirener (status) og join‐tabel entry
+        sirenRepository.saveAll(event.getSirens());
+        return fireEventRepository.save(event);
     }
 }
