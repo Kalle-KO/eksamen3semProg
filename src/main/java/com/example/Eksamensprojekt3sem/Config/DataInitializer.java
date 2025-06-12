@@ -24,15 +24,15 @@ public class DataInitializer {
             List<SirenModel> sirens = List.of(
 
             // Opret sirener via helper-metoden
-            createSiren(34.0074, -118.4973, Status.FRED, false),
-            createSiren(34.0094, -118.4953, Status.FARLIG, false),
-            createSiren(34.0094, -118.4993, Status.FRED, false),
-            createSiren(34.0114, -118.4953, Status.FARLIG, false),
-            createSiren(34.0114, -118.4993, Status.FRED, false),
-            createSiren(34.0074, -118.4953, Status.FRED, false),
-            createSiren(34.0074, -118.4993, Status.FARLIG, false),
-            createSiren(34.0094, -118.4933, Status.FRED, false),
-            createSiren(34.0094, -118.5013, Status.FRED, false)
+            createSiren(34.0074, -118.4973, Status.NEUTRAL, false),
+            createSiren(34.0094, -118.4953, Status.EMERGENCY, false),
+            createSiren(34.0094, -118.4993, Status.NEUTRAL, false),
+            createSiren(34.0114, -118.4953, Status.EMERGENCY, false),
+            createSiren(34.0114, -118.4993, Status.NEUTRAL, false),
+            createSiren(34.0074, -118.4953, Status.NEUTRAL, false),
+            createSiren(34.0074, -118.4993, Status.EMERGENCY, false),
+            createSiren(34.0094, -118.4933, Status.NEUTRAL, false),
+            createSiren(34.0094, -118.5013, Status.NEUTRAL, false)
 
             );
             sirenRepo.saveAll(sirens);

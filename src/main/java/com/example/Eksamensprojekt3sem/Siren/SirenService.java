@@ -1,11 +1,13 @@
 // src/main/java/com/example/Eksamensprojekt3sem/Siren/SirenService.java
 package com.example.Eksamensprojekt3sem.Siren;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class SirenService {
 
     private static final double EARTH_RADIUS_KM = 6371.0;

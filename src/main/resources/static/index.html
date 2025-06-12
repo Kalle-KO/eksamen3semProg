@@ -7,11 +7,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Administration af Sirener & Brande</h1>
+<h1>Siren Alert System</h1>
 
 <!-- Sirener -->
 <section>
-  <h2>Alle Sirener</h2>
+  <h2>All Sirens</h2>
   <table>
     <thead>
     <tr>
@@ -19,21 +19,20 @@
     </tr>
     </thead>
     <tbody id="sirensTable">
-    <!-- JS fylder rækker her -->
     </tbody>
   </table>
 </section>
 
 <!-- Opret/Opdater Sirene -->
 <section>
-  <h2>Opret/Opdater) Sirene</h2>
+  <h2>Create/Update Siren</h2>
   <form id="createSirenForm">
     <label>Latitude: <input type="number" step="0.0001" id="newLat" required></label>
     <label>Longitude: <input type="number" step="0.0001" id="newLon" required></label>
     <label>Status:
       <select id="newStatus">
-        <option value="FRED">FRED</option>
-        <option value="FARLIG">FARLIG</option>
+        <option value="NEUTRAL">NEUTRAL</option>
+        <option value="EMERGENCY">EMERGENCY</option>
       </select>
     </label>
     <label>Disabled: <input type="checkbox" id="newDisabled"></label>
@@ -44,15 +43,14 @@
 
 <!-- Brand-events -->
 <section>
-  <h2>Aktive Brande</h2>
+  <h2>Active Fires</h2>
   <ul id="eventsList">
-    <!-- JS fylder her -->
   </ul>
 </section>
 
 <!-- Registrer ny brand -->
 <section>
-  <h2>Registrer Brandalarm</h2>
+  <h2>Register Fire</h2>
   <form id="registerEventForm">
     <label>Latitude: <input type="number" step="0.0001" id="latInput" required></label>
     <label>Longitude: <input type="number" step="0.0001" id="lonInput" required></label>

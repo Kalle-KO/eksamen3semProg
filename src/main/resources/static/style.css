@@ -60,13 +60,13 @@ li.event-item button {
 
 /* Status-badges */
 
-.status-FARLIG {
+.status-EMERGENCY {
     color: #fff;
     background: #d9534f;
     padding: 0.1rem 0.4rem;
     border-radius: 0.2rem;
 }
-.status-FRED {
+.status-NEUTRAL {
     color: #fff;
     background: #5cb85c;
     padding: 0.1rem 0.4rem;

@@ -4,6 +4,7 @@ import com.example.Eksamensprojekt3sem.Enum.Status;
 import com.example.Eksamensprojekt3sem.Siren.SirenModel;
 import com.example.Eksamensprojekt3sem.Siren.SirenRepository;
 import com.example.Eksamensprojekt3sem.Siren.SirenService;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
+@Transactional
 public class FireEventService {
 
     private final FireEventRepository fireEventRepository;
@@ -41,20 +43,20 @@ public class FireEventService {
     public FireEventModel closeEvent(int id) {
         FireEventModel event = findById(id);
 
-        // 1) Luk event
+        // Luk event
         event.setClosed(true);
 
-        // 2) Gå alle sirener på eventet igennem og sæt dem tilbage til FRED
+        // Gå alle sirener på eventet igennem og sæt dem tilbage til FRED
         Set<SirenModel> sirens = event.getSirens();
         if (sirens != null) {
             for (SirenModel s : sirens) {
-                s.setStatus(Status.FRED);
+                s.setStatus(Status.NEUTRAL);
             }
             // Gem opdaterede sirener
             sirenRepository.saveAll(sirens);
         }
 
-        // 3) Gem eventet (så closed‐flaget bliver ved med at stå)
+        // Gem eventet (så closed‐flaget bliver ved med at stå)
         return fireEventRepository.save(event);
     }
 
@@ -66,7 +68,7 @@ public class FireEventService {
      * Opretter en nyt FireEvent, finder sirener inden for 10 km og aktiverer dem.
      */
     public FireEventModel registerEvent(double lat, double lon) {
-        // 1) Opret event og gem — nu er det managed og får et ID
+        // Opret event og gem — nu er det managed og får et ID
         FireEventModel event = new FireEventModel();
         event.setLatitude(lat);
         event.setLongitude(lon);
@@ -74,7 +76,7 @@ public class FireEventService {
         event.setClosed(false);
         event = fireEventRepository.save(event);
 
-        // 2) Hent alle sirener og tjek afstand
+        // Hent alle sirener og tjek afstand
         List<SirenModel> allSirens = sirenRepository.findAll();
         for (SirenModel s : allSirens) {
             if (s.isDisabled()) continue;
@@ -85,12 +87,12 @@ public class FireEventService {
             );
 
             if (dist <= ACTIVATION_RADIUS_KM) {
-                s.setStatus(Status.FARLIG);
+                s.setStatus(Status.EMERGENCY);
                 event.getSirens().add(s);
             }
         }
 
-        // 3) Gem opdaterede sirener (status) og join‐tabel entry
+        // Gem opdaterede sirener (status) og join‐tabel entry
         sirenRepository.saveAll(event.getSirens());
         return fireEventRepository.save(event);
     }
