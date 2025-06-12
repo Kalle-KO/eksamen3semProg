@@ -32,7 +32,7 @@ class SirenControllerIT {
         SirenModel toCreate = new SirenModel();
         toCreate.setLatitude(55.0);
         toCreate.setLongitude(12.0);
-        toCreate.setStatus(Status.FRED);
+        toCreate.setStatus(Status.NEUTRAL);
         toCreate.setDisabled(false);
 
         ResponseEntity<SirenModel> postRes =

@@ -42,7 +42,7 @@ class FireEventServiceTest {
         near.setSirenId(1);
         near.setLatitude(10);
         near.setLongitude(10);
-        near.setStatus(Status.FRED);
+        near.setStatus(Status.NEUTRAL);
         near.setDisabled(false);
         near.setFireEvents(new HashSet<>());
 
@@ -50,7 +50,7 @@ class FireEventServiceTest {
         far.setSirenId(2);
         far.setLatitude(20);
         far.setLongitude(20);
-        far.setStatus(Status.FRED);
+        far.setStatus(Status.NEUTRAL);
         far.setDisabled(false);
         far.setFireEvents(new HashSet<>());
 
@@ -69,7 +69,7 @@ class FireEventServiceTest {
         FireEventModel evt = service.registerEvent(10, 10);
 
         // Assert: near-sirenen skal nu være FARLIG
-        assertEquals(Status.FARLIG, near.getStatus());
+        assertEquals(Status.EMERGENCY, near.getStatus());
 
         // Assert: det registrerede event indeholder kun near-sirenen
         assertTrue(evt.getSirens().contains(near));
@@ -84,7 +84,7 @@ class FireEventServiceTest {
         // Arrange: en sirene som er FARLIG på et åbent event
         SirenModel s1 = new SirenModel();
         s1.setSirenId(1);
-        s1.setStatus(Status.FARLIG);
+        s1.setStatus(Status.EMERGENCY);
 
         FireEventModel evt = new FireEventModel();
         evt.setFireEventId(1);
@@ -101,7 +101,7 @@ class FireEventServiceTest {
         assertTrue(closed.isClosed());
 
         // Assert: sirenen er sat tilbage til FRED
-        assertEquals(Status.FRED, s1.getStatus());
+        assertEquals(Status.NEUTRAL, s1.getStatus());
 
         // Verify at vi gemmer de opdaterede sirener
         verify(sirenRepo).saveAll(anySet());

@@ -1,6 +1,8 @@
 package com.example.Eksamensprojekt3sem.FireEvent;
 
 import com.example.Eksamensprojekt3sem.Siren.SirenModel;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -24,6 +26,7 @@ public class FireEventModel {
     private double longitude;
 
     @Column(name = "timestamp")
+    @JsonIgnore
     private LocalDateTime timestamp;
 
     @Column(name = "closed")
