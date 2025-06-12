@@ -31,4 +31,8 @@ public class FireEventService {
         event.setClosed(true);
         return fireEventRepository.save(event);
     }
+
+    public void deleteById(int id) {
+        fireEventRepository.deleteById(id);
+    }
 }
