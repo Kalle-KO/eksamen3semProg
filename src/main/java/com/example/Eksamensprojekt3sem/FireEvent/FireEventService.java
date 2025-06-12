@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FireEventService {
@@ -39,7 +40,21 @@ public class FireEventService {
 
     public FireEventModel closeEvent(int id) {
         FireEventModel event = findById(id);
+
+        // 1) Luk event
         event.setClosed(true);
+
+        // 2) Gå alle sirener på eventet igennem og sæt dem tilbage til FRED
+        Set<SirenModel> sirens = event.getSirens();
+        if (sirens != null) {
+            for (SirenModel s : sirens) {
+                s.setStatus(Status.FRED);
+            }
+            // Gem opdaterede sirener
+            sirenRepository.saveAll(sirens);
+        }
+
+        // 3) Gem eventet (så closed‐flaget bliver ved med at stå)
         return fireEventRepository.save(event);
     }
 

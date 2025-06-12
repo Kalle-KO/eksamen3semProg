@@ -1,6 +1,7 @@
 package com.example.Eksamensprojekt3sem.FireEvent;
 
 import com.example.Eksamensprojekt3sem.Siren.SirenModel;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public class FireEventModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "fire_event_id")
-    private int FireEventId;
+    private int fireEventId;
 
     @Column(name = "latitude")
     private double latitude;
@@ -34,12 +35,13 @@ public class FireEventModel {
             joinColumns = @JoinColumn(name = "fire_event_id"),
             inverseJoinColumns = @JoinColumn(name = "siren_id")
     )
+    @JsonIgnoreProperties("fireEvents") // <-- undgå at serialize sirens’ fireEvents-part
     private Set<SirenModel> sirens =  new HashSet<>();
 
     public FireEventModel() {}
 
     public FireEventModel(int fireEventId, double latitude, double longitude, LocalDateTime timestamp, boolean closed, Set<SirenModel> sirens) {
-        FireEventId = fireEventId;
+        this.fireEventId = fireEventId;
         this.latitude = latitude;
         this.longitude = longitude;
         this.timestamp = timestamp;
@@ -48,11 +50,11 @@ public class FireEventModel {
     }
 
     public int getFireEventId() {
-        return FireEventId;
+        return fireEventId;
     }
 
     public void setFireEventId(int fireEventId) {
-        FireEventId = fireEventId;
+        fireEventId = fireEventId;
     }
 
     public double getLatitude() {

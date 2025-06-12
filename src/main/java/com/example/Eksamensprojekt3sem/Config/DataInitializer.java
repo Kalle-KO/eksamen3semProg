@@ -21,19 +21,20 @@ public class DataInitializer {
                 return;
             }
 
-            List<SirenModel> sirens = new ArrayList<>();
+            List<SirenModel> sirens = List.of(
 
             // Opret sirener via helper-metoden
-            sirens.add(createSiren(34.0074, -118.4973, Status.FRED, false));
-            sirens.add(createSiren(34.0094, -118.4953, Status.FARLIG, false));
-            sirens.add(createSiren(34.0094, -118.4993, Status.FRED, false));
-            sirens.add(createSiren(34.0114, -118.4953, Status.FARLIG, false));
-            sirens.add(createSiren(34.0114, -118.4993, Status.FRED, false));
-            sirens.add(createSiren(34.0074, -118.4953, Status.FRED, false));
-            sirens.add(createSiren(34.0074, -118.4993, Status.FARLIG, false));
-            sirens.add(createSiren(34.0094, -118.4933, Status.FRED, false));
-            sirens.add(createSiren(34.0094, -118.5013, Status.FRED, false));
+            createSiren(34.0074, -118.4973, Status.FRED, false),
+            createSiren(34.0094, -118.4953, Status.FARLIG, false),
+            createSiren(34.0094, -118.4993, Status.FRED, false),
+            createSiren(34.0114, -118.4953, Status.FARLIG, false),
+            createSiren(34.0114, -118.4993, Status.FRED, false),
+            createSiren(34.0074, -118.4953, Status.FRED, false),
+            createSiren(34.0074, -118.4993, Status.FARLIG, false),
+            createSiren(34.0094, -118.4933, Status.FRED, false),
+            createSiren(34.0094, -118.5013, Status.FRED, false)
 
+            );
             sirenRepo.saveAll(sirens);
             System.out.println("Seeded sirens: " + sirens.size());
         };

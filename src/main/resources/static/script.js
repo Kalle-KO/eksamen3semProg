@@ -1,8 +1,7 @@
 const API = '/api';
-
 let editingId = null;
 
-// -------- Sirener --------
+// — Sirener CRUD —
 
 async function fetchSirens() {
     const res = await fetch(`${API}/sirens`);
@@ -31,19 +30,20 @@ async function updateSiren(id, data) {
 }
 
 async function deleteSiren(id) {
-    await fetch(`${API}/sirens/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API}/sirens/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Kunne ikke slette');
 }
 
-function renderSirensTable(sirens) {
+function renderSirensTable(list) {
     const tbody = document.getElementById('sirensTable');
     tbody.innerHTML = '';
-    sirens.forEach(s => {
+    list.forEach(s => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
       <td>${s.sirenId}</td>
       <td>${s.latitude.toFixed(4)}</td>
       <td>${s.longitude.toFixed(4)}</td>
-      <td>${s.status}</td>
+      <td class="status-${s.status}">${s.status}</td>
       <td>${s.disabled ? 'Ja' : 'Nej'}</td>
       <td>
         <button class="edit">✏️</button>
@@ -52,10 +52,9 @@ function renderSirensTable(sirens) {
     `;
         tr.querySelector('.edit').addEventListener('click', () => startEdit(s));
         tr.querySelector('.del').addEventListener('click', async () => {
-            if (confirm(`Slet sirene #${s.sirenId}?`)) {
-                await deleteSiren(s.sirenId);
-                loadSirens();
-            }
+            if (!confirm(`Slet sirene #${s.sirenId}?`)) return;
+            await deleteSiren(s.sirenId);
+            await loadSirens();
         });
         tbody.appendChild(tr);
     });
@@ -67,39 +66,48 @@ function startEdit(s) {
     document.getElementById('newLon').value      = s.longitude;
     document.getElementById('newStatus').value   = s.status;
     document.getElementById('newDisabled').checked = s.disabled;
-    document.querySelector('#createSirenForm button')
+    document.querySelector('#createSirenForm button[type=submit]')
         .textContent = 'Opdater #' + s.sirenId;
 }
 
-document.getElementById('createSirenForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const data = {
-        latitude:  parseFloat(document.getElementById('newLat').value),
-        longitude: parseFloat(document.getElementById('newLon').value),
-        status:    document.getElementById('newStatus').value,
-        disabled:  document.getElementById('newDisabled').checked
-    };
-    try {
-        if (editingId) {
-            await updateSiren(editingId, data);
-        } else {
-            await createSiren(data);
-        }
-        editingId = null;
-        e.target.reset();
-        document.querySelector('#createSirenForm button').textContent = 'Opret';
-        loadSirens();
-    } catch (err) {
-        alert(err.message);
-    }
+document.getElementById('cancelEdit').addEventListener('click', () => {
+    editingId = null;
+    document.getElementById('createSirenForm').reset();
+    document.querySelector('#createSirenForm button[type=submit]')
+        .textContent = 'Opret';
 });
 
+document.getElementById('createSirenForm')
+    .addEventListener('submit', async e => {
+        e.preventDefault();
+        const data = {
+            latitude:  parseFloat(document.getElementById('newLat').value),
+            longitude: parseFloat(document.getElementById('newLon').value),
+            status:    document.getElementById('newStatus').value,
+            disabled:  document.getElementById('newDisabled').checked
+        };
+        try {
+            if (editingId) {
+                await updateSiren(editingId, data);
+            } else {
+                await createSiren(data);
+            }
+            editingId = null;
+            e.target.reset();
+            document.querySelector('#createSirenForm button[type=submit]')
+                .textContent = 'Opret';
+            await loadSirens();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+
 async function loadSirens() {
-    const sirens = await fetchSirens();
-    renderSirensTable(sirens);
+    const list = await fetchSirens();
+    renderSirensTable(list);
 }
 
-// -------- Brande --------
+// — Brand-events —
 
 async function fetchEvents() {
     const res = await fetch(`${API}/fire-events`);
@@ -108,9 +116,10 @@ async function fetchEvents() {
 }
 
 async function registerEvent(lat, lon) {
-    const res = await fetch(`${API}/fire-events/register?latitude=${lat}&longitude=${lon}`, {
-        method: 'POST'
-    });
+    const res = await fetch(
+        `${API}/fire-events/register?latitude=${lat}&longitude=${lon}`,
+        { method: 'POST' }
+    );
     if (!res.ok) throw new Error(await res.text());
     return res.json();
 }
@@ -136,37 +145,38 @@ function renderEvents(list) {
     `;
         li.querySelector('button').addEventListener('click', async () => {
             await closeEvent(e.fireEventId);
-            loadEvents();
+            // Genindlæs både events og sirener
+            await Promise.all([loadEvents(), loadSirens()]);
         });
         ul.appendChild(li);
     });
 }
 
 async function loadEvents() {
-    const events = await fetchEvents();
-    renderEvents(events);
+    const evts = await fetchEvents();
+    renderEvents(evts);
 }
 
-document.getElementById('registerEventForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const lat = parseFloat(document.getElementById('latInput').value);
-    const lon = parseFloat(document.getElementById('lonInput').value);
-    if (isNaN(lat) || isNaN(lon)) {
-        alert('Indtast gyldige koordinater');
-        return;
-    }
-    try {
-        const evt = await registerEvent(lat, lon);
-        alert(`Brand #${evt.fireEventId} registreret ved (${evt.latitude}, ${evt.longitude})`);
-        e.target.reset();
-        loadEvents();
-    } catch (err) {
-        alert(err.message);
-    }
-});
+document.getElementById('registerEventForm')
+    .addEventListener('submit', async e => {
+        e.preventDefault();
+        const lat = parseFloat(document.getElementById('latInput').value);
+        const lon = parseFloat(document.getElementById('lonInput').value);
+        if (isNaN(lat) || isNaN(lon)) {
+            return alert('Indtast gyldige koordinater');
+        }
+        try {
+            const evt = await registerEvent(lat, lon);
+            alert(`Brand #${evt.fireEventId} registreret ved (${evt.latitude}, ${evt.longitude})`);
+            e.target.reset();
+            // Genindlæs både events og sirener
+            await Promise.all([loadEvents(), loadSirens()]);
+        } catch (err) {
+            alert(err.message);
+        }
+    });
 
-// -------- Init --------
-
+// — Init —
 window.addEventListener('DOMContentLoaded', async () => {
     await Promise.all([loadSirens(), loadEvents()]);
 });

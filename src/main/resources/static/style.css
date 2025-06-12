@@ -49,10 +49,26 @@ form input, form select {
 }
 ul {
     list-style: none;
+    padding-left: 0;
 }
 li.event-item {
     margin-bottom: 0.5rem;
 }
 li.event-item button {
     margin-left: 1rem;
+}
+
+/* Status-badges */
+
+.status-FARLIG {
+    color: #fff;
+    background: #d9534f;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.2rem;
+}
+.status-FRED {
+    color: #fff;
+    background: #5cb85c;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.2rem;
 }

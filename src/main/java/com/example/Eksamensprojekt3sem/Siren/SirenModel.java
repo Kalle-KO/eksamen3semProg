@@ -2,6 +2,7 @@ package com.example.Eksamensprojekt3sem.Siren;
 
 import com.example.Eksamensprojekt3sem.Enum.Status;
 import com.example.Eksamensprojekt3sem.FireEvent.FireEventModel;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.Set;
@@ -22,12 +23,14 @@ public class SirenModel {
     private double longitude;
 
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     @Column(name = "disabled")
     private boolean disabled;
 
     @ManyToMany(mappedBy = "sirens")
+    @JsonIgnore // <-- spring Jackson-serialisering af fireEvents
     private Set<FireEventModel> fireEvents;
 
     public SirenModel() {}

@@ -1,6 +1,5 @@
 package com.example.Eksamensprojekt3sem.FireEvent;
 
-import com.example.Eksamensprojekt3sem.Siren.SirenModel;
 import com.example.Eksamensprojekt3sem.Siren.SirenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/fire-events")
 public class FireEventController {
@@ -19,68 +19,56 @@ public class FireEventController {
     private final FireEventService fireEventService;
     private final SirenService sirenService;
 
-    public FireEventController(FireEventService fireEventService,  SirenService sirenService) {
+    public FireEventController(FireEventService fireEventService, SirenService sirenService) {
         this.fireEventService = fireEventService;
         this.sirenService = sirenService;
     }
 
     @GetMapping
     public ResponseEntity<List<FireEventModel>> findAll() {
-        List<FireEventModel> all = fireEventService.findAll();
-        // 200 OK + liste (tom liste er fint)
-        return ResponseEntity.ok(all);
+        return ResponseEntity.ok(fireEventService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable int id) {
         try {
-            FireEventModel found = fireEventService.findById(id);
-            // 200 OK + fireEvent
-            return ResponseEntity.ok(found);
+            return ResponseEntity.ok(fireEventService.findById(id));
         } catch (IllegalArgumentException e) {
-            // 404 hvis ikke fundet
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Fire event not found with id = " + id);
         }
     }
 
     @PostMapping
     public ResponseEntity<?> createFireEvent(@RequestBody FireEventModel fireEventModel) {
-        try {
-            // Afvis hvis klienten allerede angiver en ID
-            if (fireEventModel.getFireEventId() != 0) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("Cannot specify fireEventId for create; it is auto-generated");
-            }
+        if (fireEventModel.getFireEventId() != 0)
+            return ResponseEntity.badRequest().body("Cannot specify fireEventId for create; it is auto-generated");
 
-            // Sæt timestamp, hvis ikke angivet
-            if (fireEventModel.getTimestamp() == null) {
-                fireEventModel.setTimestamp(LocalDateTime.now());
-            }
+        if (fireEventModel.getTimestamp() == null)
+            fireEventModel.setTimestamp(LocalDateTime.now());
 
-            // Gem fire event
-            FireEventModel saved = fireEventService.save(fireEventModel);
+        FireEventModel saved = fireEventService.save(fireEventModel);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(saved.getFireEventId())
+                .toUri();
+        return ResponseEntity.created(location).body(saved);
+    }
 
-            // Byg Location-URI: /api/fires/{id}
-            URI location = ServletUriComponentsBuilder
-                    .fromCurrentRequest()               // fx http://localhost:8080/api/fires
-                    .path("/{id}")                // tilføj "/{id}"
-                    .buildAndExpand(saved.getFireEventId()) // sæt det nye id ind
-                    .toUri();
+    @PostMapping("/register")
+    public ResponseEntity<FireEventModel> registerFireEvent(
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude
+    ) {
+        FireEventModel evt = fireEventService.registerEvent(latitude, longitude);
+        return ResponseEntity.status(HttpStatus.CREATED).body(evt);
+    }
 
-            // Returner 201 Created + Location + body
-            return ResponseEntity
-                    .created(location)
-                    .body(saved);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                    .badRequest()
-                    .body("Error creating fire event: " + e.getMessage());
-        }
+    // **Her er det, du mangler:**
+    @PostMapping("/{id}/close")
+    public ResponseEntity<FireEventModel> closeFireEvent(@PathVariable int id) {
+        FireEventModel closed = fireEventService.closeEvent(id);
+        return ResponseEntity.ok(closed);
     }
 
     @PutMapping("/{id}")
@@ -90,38 +78,22 @@ public class FireEventController {
     ) {
         try {
             FireEventModel existing = fireEventService.findById(id);
-
-            // Opdater simple felter
             existing.setLatitude(requestBody.getLatitude());
             existing.setLongitude(requestBody.getLongitude());
             existing.setTimestamp(requestBody.getTimestamp());
             existing.setClosed(requestBody.isClosed());
 
-            // Hvis klienten sender siren-IDs, så opdater relationen:
             if (requestBody.getSirens() != null) {
-                // Hent den Set, der allerede er knyttet til eventet
-                Set<SirenModel> sirenRelation = existing.getSirens();
-                // Tøm den
-                sirenRelation.clear();
-                // Fyld den op igen med DB-entiteter
-                for (SirenModel s : requestBody.getSirens()) {
-                    SirenModel dbSiren = sirenService.findById(s.getSirenId());
-                    sirenRelation.add(dbSiren);
+                Set<com.example.Eksamensprojekt3sem.Siren.SirenModel> rel = existing.getSirens();
+                rel.clear();
+                for (var s : requestBody.getSirens()) {
+                    rel.add(sirenService.findById(s.getSirenId()));
                 }
             }
 
-            FireEventModel saved = fireEventService.save(existing);
-            return ResponseEntity.ok(saved);
-
+            return ResponseEntity.ok(fireEventService.save(existing));
         } catch (IllegalArgumentException iae) {
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(iae.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                    .badRequest()
-                    .body("Error updating fire event: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
         }
     }
 
@@ -131,30 +103,7 @@ public class FireEventController {
             fireEventService.deleteById(id);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException iae) {
-            // fx hvis service kaster ved ikke-fundet
-            return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND)
-                    .body(iae.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity
-                    .badRequest()
-                    .body("Error deleting fire event: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(iae.getMessage());
         }
-    }
-
-    /**
-     * Registrerer en brand og aktiverer sirener indenfor 10 km.
-     * Kaldes med POST /api/fire-events/register?latitude=..&longitude=..
-     */
-    @PostMapping("/register")
-    public ResponseEntity<FireEventModel> registerFireEvent(
-            @RequestParam("latitude") double latitude,
-            @RequestParam("longitude") double longitude
-    ) {
-        FireEventModel evt = fireEventService.registerEvent(latitude, longitude);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(evt);
     }
 }
