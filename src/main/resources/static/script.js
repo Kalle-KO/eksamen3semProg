@@ -44,7 +44,7 @@ function renderSirensTable(list) {
       <td>${s.latitude.toFixed(4)}</td>
       <td>${s.longitude.toFixed(4)}</td>
       <td class="status-${s.status}">${s.status}</td>
-      <td>${s.disabled ? 'Ja' : 'Nej'}</td>
+      <td>${s.disabled ? 'Yes' : 'No'}</td>
       <td>
         <button class="edit">✏️</button>
         <button class="del">🗑️</button>
