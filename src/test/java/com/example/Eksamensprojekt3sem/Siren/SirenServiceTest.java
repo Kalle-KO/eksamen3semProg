@@ -11,7 +11,7 @@ class SirenServiceTest {
 
     @BeforeEach
     void setUp() {
-        sirenService = new SirenService();
+        sirenService = new SirenService(null);
     }
 
     @Test
