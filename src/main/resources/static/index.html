@@ -2,38 +2,57 @@
 <html lang="da">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mit 24-timers Projekt</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Siren & FireEvent Admin</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>Mit Projekt</h1>
-  <nav>
-    <ul>
-      <li><a href="#home">Hjem</a></li>
-      <li><a href="#about">Om</a></li>
-      <li><a href="#contact">Kontakt</a></li>
-    </ul>
-  </nav>
-</header>
+<h1>Siren Administration</h1>
 
-<main id="home">
-  <section class="intro">
-    <h2>Velkommen!</h2>
-    <p>Brug dette skelet til at komme hurtigt i gang med HTML, CSS og JavaScript.</p>
-  </section>
+<section>
+  <h2>Alle Sirener</h2>
+  <table>
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Lat</th>
+      <th>Lon</th>
+      <th>Status</th>
+      <th>Disabled</th>
+      <th>Handling</th>
+    </tr>
+    </thead>
+    <tbody id="sirensTable">
+    <!-- JS fylder rækker her -->
+    </tbody>
+  </table>
+</section>
 
-  <section id="data">
-    <h2>Data fra API</h2>
-    <button id="loadBtn">Hent data</button>
-    <pre id="output"></pre>
-  </section>
-</main>
-
-<footer>
-  <p>&copy; 2025 Kalle Kvisto</p>
-</footer>
+<section>
+  <h2>Opret / Rediger sirene</h2>
+  <form id="createSirenForm">
+    <label>
+      Latitude:
+      <input type="number" step="0.0001" id="newLat" required>
+    </label>
+    <label>
+      Longitude:
+      <input type="number" step="0.0001" id="newLon" required>
+    </label>
+    <label>
+      Status:
+      <select id="newStatus">
+        <option value="FRED">FRED</option>
+        <option value="FARLIG">FARLIG</option>
+      </select>
+    </label>
+    <label>
+      Disabled:
+      <input type="checkbox" id="newDisabled">
+    </label>
+    <button type="submit">Opret</button>
+  </form>
+</section>
 
 <script src="script.js"></script>
 </body>
