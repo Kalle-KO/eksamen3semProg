@@ -12,6 +12,12 @@ import java.util.List;
 @Configuration
 public class DataInitializer { // Backup - Data ligger nu dynamisk i MySQL database
 
+    /**
+     * Initiates different sirens for a basic starter-pack of sirens
+     * Uses the different variables in SirenModel
+     * @param sirenRepo
+     * @return
+     */
     @Bean
     public CommandLineRunner initSirens(SirenRepository sirenRepo) {
         return args -> {
@@ -39,6 +45,14 @@ public class DataInitializer { // Backup - Data ligger nu dynamisk i MySQL datab
         };
     }
 
+    /**
+     * Creates a siren object
+     * @param latitude
+     * @param longitude
+     * @param status
+     * @param disabled
+     * @return
+     */
     private SirenModel createSiren(double latitude, double longitude, Status status, boolean disabled) {
         SirenModel siren = new SirenModel();
         siren.setLatitude(latitude);

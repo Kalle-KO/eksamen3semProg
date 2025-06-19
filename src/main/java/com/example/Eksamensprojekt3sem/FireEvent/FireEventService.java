@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@Transactional
+@Transactional // Sikrer en konsistent database, da enten alt eller intet bliver gemt. Bruges når metoder opdaterer flere entiteter (fx registerEvent)
 public class FireEventService {
 
     private final FireEventRepository fireEventRepository;

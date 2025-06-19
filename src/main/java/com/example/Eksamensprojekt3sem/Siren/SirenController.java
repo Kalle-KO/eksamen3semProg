@@ -1,5 +1,6 @@
 package com.example.Eksamensprojekt3sem.Siren;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -102,13 +103,14 @@ public class SirenController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteSiren(@PathVariable int id) {
+    public ResponseEntity<?> deleteById(@PathVariable int id) {
         try {
-        sirenService.deleteById(id);
-        return ResponseEntity.noContent().build();
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            sirenService.deleteById(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Kan ikke slette sirene – den er muligvis tilknyttet en event.");
         }
     }
+
 }

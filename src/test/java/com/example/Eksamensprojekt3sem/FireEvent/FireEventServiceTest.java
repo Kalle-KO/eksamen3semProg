@@ -60,7 +60,7 @@ class FireEventServiceTest {
         // Når vi gemmer et FireEvent, skal det returnere samme instans med ID=1
         when(fireRepo.save(any(FireEventModel.class))).thenAnswer(invocation -> {
             FireEventModel e = invocation.getArgument(0);
-            e.setFireEventId(1);
+            e.setFireEventId(1); // Vi gemmer Fire Event med ID 1, er dybest set det hele der sker i dette stykke.
             return e;
         });
 

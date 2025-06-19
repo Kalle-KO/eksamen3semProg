@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*") // Bruges ikke mere - kun til at lave python server
 @RestController
 @RequestMapping("/api/fire-events")
 public class FireEventController {
@@ -26,7 +26,7 @@ public class FireEventController {
 
     @GetMapping
     public ResponseEntity<List<FireEventModel>> findAll() {
-        return ResponseEntity.ok(fireEventService.findAll());
+        return ResponseEntity.ok(fireEventService.findAll()); // ResponseEntity.ok returnerer både data og statuskode (200 ok)
     }
 
     @GetMapping("/{id}")
@@ -40,7 +40,7 @@ public class FireEventController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createFireEvent(@RequestBody FireEventModel fireEventModel) {
+    public ResponseEntity<?> createFireEvent(@RequestBody FireEventModel fireEventModel) { // Bør egentlig være FireEventModel i stedet for "?"
         if (fireEventModel.getFireEventId() != 0)
             return ResponseEntity.badRequest().body("Cannot specify fireEventId for create; it is auto-generated");
 
@@ -48,23 +48,22 @@ public class FireEventController {
             fireEventModel.setTimestamp(LocalDateTime.now());
 
         FireEventModel saved = fireEventService.save(fireEventModel);
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest() // REST best practice. Location-header vises i POSTMAN
                 .path("/{id}")
                 .buildAndExpand(saved.getFireEventId())
-                .toUri();
-        return ResponseEntity.created(location).body(saved);
+                .toUri(); // Tager aktuelle request-URL, tilføjer dynamisk del (id), indsætter id'et i URL'en, konverterer hele stien til et URI-objekt
+        return ResponseEntity.created(location).body(saved); // gemmer stien og det nye objekt
     }
 
     @PostMapping("/register")
     public ResponseEntity<FireEventModel> registerFireEvent(
             @RequestParam("latitude") double latitude,
-            @RequestParam("longitude") double longitude
+            @RequestParam("longitude") double longitude // Bruges til bare at hente to koordinater: POST /api/fire-events/register?latitude=55.6761&longitude=12.5683
     ) {
         FireEventModel evt = fireEventService.registerEvent(latitude, longitude);
         return ResponseEntity.status(HttpStatus.CREATED).body(evt);
     }
 
-    // **Her er det, du mangler:**
     @PostMapping("/{id}/close")
     public ResponseEntity<FireEventModel> closeFireEvent(@PathVariable int id) {
         FireEventModel closed = fireEventService.closeEvent(id);
@@ -83,11 +82,11 @@ public class FireEventController {
             existing.setTimestamp(requestBody.getTimestamp());
             existing.setClosed(requestBody.isClosed());
 
-            if (requestBody.getSirens() != null) {
-                Set<com.example.Eksamensprojekt3sem.Siren.SirenModel> rel = existing.getSirens();
-                rel.clear();
-                for (var s : requestBody.getSirens()) {
-                    rel.add(sirenService.findById(s.getSirenId()));
+            if (requestBody.getSirens() != null) { // Hvis FireEvent er tilknyttet sirener så...
+                Set<com.example.Eksamensprojekt3sem.Siren.SirenModel> rel = existing.getSirens(); // Henter nuværende sirener
+                rel.clear(); // Sletter gamle liste af sirener - altså relationen
+                for (var s : requestBody.getSirens()) { // Looper igennem de sirener der blev sendt med requesten, altså de nye sirener.
+                    rel.add(sirenService.findById(s.getSirenId())); // Henter nye sirener
                 }
             }
 

@@ -1,9 +1,13 @@
 package com.example.Eksamensprojekt3sem.FireEvent;
 
 import com.example.Eksamensprojekt3sem.Siren.SirenModel;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -18,14 +22,21 @@ public class FireEventModel {
     @Column(name = "fire_event_id")
     private int fireEventId;
 
+    @NotNull
+    @Min(value = -90, message = "Latitude has to be -90 at minimum")
+    @Max(value = 90, message = "Latitude has to be 90 at maximum")
     @Column(name = "latitude")
     private double latitude;
 
+    @NotNull
+    @Min(value = -180, message = "Longitude has to be -180 at minimum")
+    @Max(value = 180, message = "Longitude has to be 180 at maximum")
     @Column(name = "longitude")
     private double longitude;
 
+    @NotNull
     @Column(name = "timestamp")
-    @JsonIgnore
+    // Her var før @JsonIgnore - det gjorde at jeg fik Invalid Date når jeg skulle se dato på startet brand
     private LocalDateTime timestamp;
 
     @Column(name = "closed")
@@ -37,7 +48,7 @@ public class FireEventModel {
             joinColumns = @JoinColumn(name = "fire_event_id"),
             inverseJoinColumns = @JoinColumn(name = "siren_id")
     )
-    @JsonIgnoreProperties("fireEvents") // <-- undgå at serialize sirens’ fireEvents-part
+    @JsonIgnoreProperties("fireEvents") // <-- undgå at serialize sirens’ fireEvents-part (uendeligt loop)
     private Set<SirenModel> sirens =  new HashSet<>();
 
     public FireEventModel() {}
@@ -57,7 +68,7 @@ public class FireEventModel {
 
     public void setFireEventId(int fireEventId) {
         fireEventId = fireEventId;
-    }
+    } // overflødig, da der auto-genereres ID.
 
     public double getLatitude() {
         return latitude;

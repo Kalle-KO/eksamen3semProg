@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional // Sikrer en konsistent database, da enten alt eller intet bliver gemt. Det er godt når vi gemmer/sletter flere sirener, så vi får det hele med.
 public class SirenService {
 
     private static final double EARTH_RADIUS_KM = 6371.0;

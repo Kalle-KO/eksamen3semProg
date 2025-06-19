@@ -4,6 +4,9 @@ import com.example.Eksamensprojekt3sem.Enum.Status;
 import com.example.Eksamensprojekt3sem.FireEvent.FireEventModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.Set;
 
@@ -16,12 +19,19 @@ public class SirenModel {
     @Column(name = "siren_id")
     private int sirenId;
 
+    @NotNull
+    @Min(value = -90, message = "Latitude has to be -90 at minimum")
+    @Max(value = 90, message = "Latitude has to be 90 at maximum")
     @Column(name = "latitude")
     private double latitude;
 
+    @NotNull
+    @Min(value = -180, message = "Longitude has to be -180 at minimum")
+    @Max(value = 180, message = "Longitude has to be 180 at maximum")
     @Column(name = "longitude")
     private double longitude;
 
+    @NotNull
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private Status status;
@@ -29,7 +39,7 @@ public class SirenModel {
     @Column(name = "disabled")
     private boolean disabled;
 
-    @ManyToMany(mappedBy = "sirens")
+    @ManyToMany(mappedBy = "sirens", cascade = CascadeType.ALL)
     @JsonIgnore // <-- spring Jackson-serialisering af fireEvents
     private Set<FireEventModel> fireEvents;
 

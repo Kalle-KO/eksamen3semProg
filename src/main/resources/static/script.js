@@ -1,11 +1,11 @@
 const API = '/api';
-let editingId = null;
+let editingId = null; // Bruges ift at sættes efter om man redigerer eller opretter en sirene (hvis redigere, editingId = s.sirenId)
 
 // — Sirener CRUD —
 
 async function fetchSirens() {
     const res = await fetch(`${API}/sirens`);
-    if (!res.ok) throw new Error(`Fejl ved hentning: ${res.status}`);
+    if (!res.ok) throw new Error(`Error getting: ${res.status}`);
     return res.json();
 }
 
@@ -31,7 +31,7 @@ async function updateSiren(id, data) {
 
 async function deleteSiren(id) {
     const res = await fetch(`${API}/sirens/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Kunne ikke slette');
+    if (!res.ok) throw new Error('Could not delete');
 }
 
 function renderSirensTable(list) {
@@ -40,41 +40,48 @@ function renderSirensTable(list) {
     list.forEach(s => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-      <td>${s.sirenId}</td>
-      <td>${s.latitude.toFixed(4)}</td>
-      <td>${s.longitude.toFixed(4)}</td>
-      <td class="status-${s.status}">${s.status}</td>
-      <td>${s.disabled ? 'Yes' : 'No'}</td>
-      <td>
-        <button class="edit">✏️</button>
-        <button class="del">🗑️</button>
-      </td>
-    `;
+          <td>${s.sirenId}</td>
+          <td>${s.latitude.toFixed(4)}</td>
+          <td>${s.longitude.toFixed(4)}</td>
+          <td class="status-${s.status}" style="width: 10px">${s.status} </td>
+          <td>${s.disabled ? 'Yes' : 'No'}</td>
+          <td>
+            <button class="edit">✏️</button>
+            <button class="del">🗑️</button>
+          </td>
+        `;
+
         tr.querySelector('.edit').addEventListener('click', () => startEdit(s));
         tr.querySelector('.del').addEventListener('click', async () => {
-            if (!confirm(`Slet sirene #${s.sirenId}?`)) return;
-            await deleteSiren(s.sirenId);
-            await loadSirens();
+            if (!confirm(`Delete siren #${s.sirenId}?`)) return;
+            try {
+                await deleteSiren(s.sirenId);
+                await loadSirens();
+            } catch (err) {
+                alert("Could not delete the siren: " + err.message);
+            }
         });
+
         tbody.appendChild(tr);
     });
 }
 
-function startEdit(s) {
+
+        function startEdit(s) {
     editingId = s.sirenId;
     document.getElementById('newLat').value      = s.latitude;
     document.getElementById('newLon').value      = s.longitude;
     document.getElementById('newStatus').value   = s.status;
     document.getElementById('newDisabled').checked = s.disabled;
     document.querySelector('#createSirenForm button[type=submit]')
-        .textContent = 'Opdater #' + s.sirenId;
+        .textContent = 'Update #' + s.sirenId;
 }
 
 document.getElementById('cancelEdit').addEventListener('click', () => {
     editingId = null;
     document.getElementById('createSirenForm').reset();
     document.querySelector('#createSirenForm button[type=submit]')
-        .textContent = 'Opret';
+        .textContent = 'Create';
 });
 
 document.getElementById('createSirenForm')
@@ -95,7 +102,7 @@ document.getElementById('createSirenForm')
             editingId = null;
             e.target.reset();
             document.querySelector('#createSirenForm button[type=submit]')
-                .textContent = 'Opret';
+                .textContent = 'Create';
             await loadSirens();
         } catch (err) {
             alert(err.message);
@@ -111,7 +118,7 @@ async function loadSirens() {
 
 async function fetchEvents() {
     const res = await fetch(`${API}/fire-events`);
-    if (!res.ok) throw new Error(`Fejl ved hentning af events: ${res.status}`);
+    if (!res.ok) throw new Error(`Error collecting events: ${res.status}`);
     return res.json();
 }
 
@@ -136,12 +143,12 @@ function renderEvents(list) {
     const ul = document.getElementById('eventsList');
     ul.innerHTML = '';
     list.filter(e => !e.closed).forEach(e => {
-        const time = new Date(e.timestamp).toLocaleString();
+        const time = e.timestamp ? new Date(e.timestamp + "Z").toLocaleString() : "Unknown time"; // Udskiftet for at rette Invalid date fejl. Var før: const time = new Date(e.timestamp).toLocaleString();
         const li = document.createElement('li');
         li.className = 'event-item';
         li.innerHTML = `
       <span>#${e.fireEventId} – (${e.latitude.toFixed(4)}, ${e.longitude.toFixed(4)}) @ ${time}</span>
-      <button>Afmeld</button>
+      <button>Cancel</button>
     `;
         li.querySelector('button').addEventListener('click', async () => {
             await closeEvent(e.fireEventId);
@@ -159,15 +166,15 @@ async function loadEvents() {
 
 document.getElementById('registerEventForm')
     .addEventListener('submit', async e => {
-        e.preventDefault();
+        e.preventDefault(); // for at undgå side-refresh, og i stedet håndterer jeg data med JavaScript, som så kalder en POST eller PUT request til backend.
         const lat = parseFloat(document.getElementById('latInput').value);
         const lon = parseFloat(document.getElementById('lonInput').value);
         if (isNaN(lat) || isNaN(lon)) {
-            return alert('Indtast gyldige koordinater');
+            return alert('Type valid coordinates');
         }
         try {
             const evt = await registerEvent(lat, lon);
-            alert(`Brand #${evt.fireEventId} registreret ved (${evt.latitude}, ${evt.longitude})`);
+            alert(`Fire #${evt.fireEventId} registered at (${evt.latitude}, ${evt.longitude})`);
             e.target.reset();
             // Genindlæs både events og sirener
             await Promise.all([loadEvents(), loadSirens()]);
