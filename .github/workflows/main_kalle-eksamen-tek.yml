@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# NØDVENDIGT for OIDC (azure/login)
 permissions:
   id-token: write
   contents: read
@@ -29,7 +30,7 @@ jobs:
         shell: bash
         run: |
           ls -lh target
-          # vælg en boot-jar (ekskluder evt. *original*.jar)
+          # vælg en boot-jar (ekskluder "original" jars)
           JAR=$(ls target/*.jar | grep -v 'original' | head -n 1)
           if [ -z "$JAR" ]; then
             echo "No JAR found in target/"; exit 1
@@ -46,6 +47,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # (dobbeltsikring) permissions også på jobniveau
     permissions:
       id-token: write
       contents: read
@@ -54,6 +56,18 @@ jobs:
         with:
           name: app
           path: .
+
+      # Sanity-check: sikrer at secrets IKKE er tomme
+      - name: Sanity check secrets
+        env:
+          A: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A19F3E8F62EB4804BE825B075DF4C5A8 }}
+          B: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4779BBD59E9402782D0F43EBACF4699 }}
+          C: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_77FEEAF376BA45ED92A6F3B16981803FA }}
+        run: |
+          [ -n "$A" ] || (echo "CLIENTID secret empty" && exit 1)
+          [ -n "$B" ] || (echo "TENANTID secret empty" && exit 1)
+          [ -n "$C" ] || (echo "SUBSCRIPTIONID secret empty" && exit 1)
+          echo "Secrets present ✔"
 
       - name: Azure OIDC login
         uses: azure/login@v2
