@@ -1,63 +1,78 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy JAR app to Azure Web App - kalle-eksamen-tek
+name: Build & Deploy Spring Boot to Azure Web App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
+
+# Nødvendigt for OIDC (azure/login)
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java version
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
+          distribution: temurin
           java-version: '21'
-          distribution: 'microsoft'
+          cache: 'maven'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Build with Maven (skip tests)
+        run: mvn -B -DskipTests clean package
 
-      - name: Upload artifact for deployment job
+      - name: Normalize jar name (to app.jar)
+        shell: bash
+        run: |
+          ls -lh target
+          JAR=$(ls target/*.jar | grep -v 'original' | head -n 1)
+          if [ -z "$JAR" ]; then
+            echo "No JAR found in target/"; exit 1
+          fi
+          mv "$JAR" target/app.jar
+          ls -lh target/app.jar
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          name: app
+          path: target/app.jar
 
   deploy:
-    runs-on: ubuntu-latest
     needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-  
+    runs-on: ubuntu-latest
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: java-app
-      
-      - name: Login to Azure
+          name: app
+          path: .
+
+      # (Valgfrit) sanity check – fail tidligt hvis en secret mangler
+      - name: Sanity check secrets
+        env:
+          A: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A19F3E8F62EB4804BE825B075DF4C5A8 }}
+          B: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4779BBD59E9402782D0F43EBACF4699 }}
+          C: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_77FEEAF376BA45ED92A6F3B16981803FA }}
+        run: |
+          [ -n "$A" ] || (echo "CLIENTID secret empty" && exit 1)
+          [ -n "$B" ] || (echo "TENANTID secret empty" && exit 1)
+          [ -n "$C" ] || (echo "SUBSCRIPTIONID secret empty" && exit 1)
+          echo "Secrets present ✔"
+
+      - name: Azure OIDC login
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_1F89C6F5A85D4672A0117EB3A25D19F4 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_CAA2EBABC51C4CA78F5ABF1A22A08A42 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_87C83903058F4462936F1197EA89FCC4 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A19F3E8F62EB4804BE825B075DF4C5A8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4779BBD59E9402782D0F43EBACF4699 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_77FEEAF376BA45ED92A6F3B16981803FA }}
 
       - name: Deploy to Azure Web App
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'kalle-eksamen-tek'
-          slot-name: 'Production'
-          package: '*.jar'
-          
+          app-name: kalle-eksamen-tek
+          package: app.jar
