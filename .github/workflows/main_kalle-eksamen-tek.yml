@@ -1,0 +1,78 @@
+name: Build & Deploy Spring Boot to Azure Web App
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Nødvendigt for OIDC (azure/login)
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build with Maven (skip tests)
+        run: mvn -B -DskipTests clean package
+
+      - name: Normalize jar name (to app.jar)
+        shell: bash
+        run: |
+          ls -lh target
+          JAR=$(ls target/*.jar | grep -v 'original' | head -n 1)
+          if [ -z "$JAR" ]; then
+            echo "No JAR found in target/"; exit 1
+          fi
+          mv "$JAR" target/app.jar
+          ls -lh target/app.jar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: target/app.jar
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
+          path: .
+
+      # (Valgfrit) sanity check – fail tidligt hvis en secret mangler
+      - name: Sanity check secrets
+        env:
+          A: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A19F3E8F62EB4804BE825B075DF4C5A8 }}
+          B: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4779BBD59E9402782D0F43EBACF4699 }}
+          C: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_77FEEAF376BA45ED92A6F3B16981803FA }}
+        run: |
+          [ -n "$A" ] || (echo "CLIENTID secret empty" && exit 1)
+          [ -n "$B" ] || (echo "TENANTID secret empty" && exit 1)
+          [ -n "$C" ] || (echo "SUBSCRIPTIONID secret empty" && exit 1)
+          echo "Secrets present ✔"
+
+      - name: Azure OIDC login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A19F3E8F62EB4804BE825B075DF4C5A8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A4779BBD59E9402782D0F43EBACF4699 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_77FEEAF376BA45ED92A6F3B16981803FA }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: kalle-eksamen-tek
+          package: app.jar
